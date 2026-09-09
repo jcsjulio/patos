@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Arcade dos Patos 🦆 — Trilogia</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background: #0f111a;
+      color: #fff;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #app-container {
+      position: relative;
+      width: 880px;
+      height: 580px;
+      background: #1a1c23;
+      border: 4px solid #fbc02d;
+      border-radius: 12px;
+      box-shadow: 0 0 35px rgba(251, 192, 45, 0.25);
+      overflow: hidden;
+    }
+
+    /* BARRA DE CONTROLE SUPERIOR */
+    .top-controls {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 60;
+    }
+
+    .btn-action {
+      background: #282e42;
+      border: 1px solid #777;
+      color: #fff;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-action:hover {
+      background: #374151;
+      border-color: #fbc02d;
+    }
+    #btn-sound.muted {
+      background: #5c2020;
+      border-color: #e53935;
+    }
+
+    /* MENU PRINCIPAL */
+    #main-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle, #232736 0%, #11131a 100%);
+      z-index: 50;
+    }
+
+    .title-box {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title-box h1 {
+      font-size: 38px;
+      color: #fbc02d;
+      text-shadow: 3px 3px #000;
+      letter-spacing: 2px;
+    }
+
+    .title-box p {
+      color: #90a4ae;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .game-selection {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 820px;
+    }
+
+    .game-card {
+      width: 240px;
+      background: #1e2230;
+      border: 2px solid #374151;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .game-card:hover {
+      border-color: #fbc02d;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      background: #282e42;
+    }
+
+    .game-card .card-icon {
+      font-size: 44px;
+      margin-bottom: 8px;
+    }
+
+    .game-card h3 {
+      font-size: 17px;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .game-card p {
+      font-size: 11px;
+      color: #a0aec0;
+      line-height: 1.4;
+    }
+
+    /* TELAS DOS JOGOS */
+    .game-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* HUD SURVIVOR */
+    #survivor-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px 14px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 15px;
+      text-shadow: 2px 2px #000;
+      padding-right: 180px;
+    }
+
+    .bar {
+      width: 100%;
+      background: #222;
+      border: 2px solid #000;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    #hp-bar { height: 10px; background: #e53935; width: 100%; }
+    #xp-bar { height: 8px; background: #fbc02d; width: 0%; }
+
+    /* HUD CROSSING */
+    #crossing-hud {
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      text-shadow: 2px 2px #000;
+      pointer-events: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    /* TELA DUCK CLICKER */
+    #screen-clicker {
+      background: #182315;
+      display: none;
+      flex-direction: row;
+      height: 100%;
+    }
+
+    .clicker-left {
+      flex: 1.1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 3px solid #2e4a23;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle, #2b4522 0%, #152012 100%);
+    }
+
+    .clicker-stats {
+      text-align: center;
+      margin-bottom: 20px;
+      z-index: 5;
+    }
+
+    .clicker-seeds {
+      font-size: 30px;
+      font-weight: bold;
+      color: #ffd54f;
+      text-shadow: 2px 2px #000;
+    }
+
+    .clicker-sps {
+      font-size: 14px;
+      color: #a5d6a7;
+      margin-top: 4px;
+    }
+
+    #big-duck {
+      font-size: 110px;
+      cursor: pointer;
+      transition: transform 0.06s;
+      z-index: 5;
+    }
+
+    #big-duck:active {
+      transform: scale(0.88);
+    }
+
+    .floating-seed {
+      position: absolute;
+      color: #ffd54f;
+      font-weight: bold;
+      font-size: 20px;
+      pointer-events: none;
+      animation: floatUp 0.8s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-70px); }
+    }
+
+    .clicker-right {
+      flex: 0.9;
+      display: flex;
+      flex-direction: column;
+      padding: 50px 16px 16px 16px;
+      background: #1e2a1b;
+      overflow-y: auto;
+      gap: 10px;
+    }
+
+    .clicker-shop-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #fbc02d;
+      border-bottom: 2px solid #335327;
+      padding-bottom: 6px;
+      margin-bottom: 4px;
+    }
+
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #283a24;
+      border: 2px solid #3b5a32;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .shop-item:hover {
+      border-color: #ffd54f;
+      background: #334b2f;
+    }
+
+    .shop-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #273623;
+    }
+
+    .shop-info-title {
+      font-weight: bold;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .shop-info-desc {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .shop-cost {
+      text-align: right;
+    }
+
+    .shop-cost-val {
+      color: #ffd54f;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .shop-count {
+      font-size: 11px;
+      color: #81c784;
+    }
+
+    /* MODAIS GERAIS */
+    .modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.88);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 30;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .modal h2 {
+      font-size: 26px;
+      color: #fbc02d;
+      margin-bottom: 16px;
+    }
+
+    .grid-cards {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 760px;
+    }
+
+    .select-card {
+      background: #222;
+      border: 2px solid #555;
+      border-radius: 8px;
+      padding: 12px;
+      width: 210px;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.15s;
+    }
+    .select-card:hover {
+      border-color: #fbc02d;
+      background: #333;
+      transform: translateY(-4px);
+    }
+    .select-card .icon { font-size: 38px; margin-bottom: 4px; }
+    .select-card .name { font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #fff; }
+    .select-card .desc { font-size: 11px; color: #aaa; line-height: 1.3; }
+
+    .btn {
+      background: #fbc02d;
+      color: #111;
+      border: none;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 10px 22px;
+      margin-top: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn:hover { background: #ffd54f; }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+
+  <!-- BOTÕES SUPERIORES DE CONTROLE -->
+  <div class="top-controls">
+    <button class="btn-action" id="btn-sound" onclick="toggleSom()">🔊 SOM: ON</button>
+    <button class="btn-action" id="btn-home" onclick="abrirMenuPrincipal()" style="display: none;">🏠 MENU</button>
+  </div>
+
+  <!-- TELA 0: MENU PRINCIPAL -->
+  <div id="main-menu">
+    <div class="title-box">
+      <h1>ARCADE DOS PATOS 🦆</h1>
+      <p>ESCOLHA UMA AVENTURA NO NAVEGADOR</p>
+    </div>
+
+    <div class="game-selection">
+      <div class="game-card" onclick="iniciarSurvivor()">
+        <div class="card-icon">🦆⚔️</div>
+        <h3>Duck Survivor</h3>
+        <p>Enfrente hordas de raposas e lobos com baguetes giratórias, pães e ovos teleguiados.</p>
+      </div>
+
+      <div class="game-card" onclick="iniciarCrossing()">
+        <div class="card-icon">🦆🚗</div>
+        <h3>Duck Crossing</h3>
+        <p>Atravesse rodovias com tráfego pesado e rios cheios de correnteza até os ninhos.</p>
+      </div>
+
+      <div class="game-card" onclick="iniciarClicker()">
+        <div class="card-icon">🌾🦆</div>
+        <h3>Duck Clicker</h3>
+        <p>Clique no Pato Dourado, colha sementes, construa fazendas e crie um império de patinhos.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA 1: DUCK SURVIVOR -->
+  <div id="screen-survivor" class="game-screen">
+    <canvas id="canvas-survivor" width="880" height="580"></canvas>
+    
+    <div id="survivor-hud">
+      <div class="hud-row">
+        <span id="txt-lvl">LV 1</span>
+        <span id="txt-timer">00:00</span>
+        <span id="txt-kills">KILLS: 0</span>
+      </div>
+      <div class="bar"><div id="hp-bar"></div></div>
+      <div class="bar"><div id="xp-bar"></div></div>
+    </div>
+
+    <div id="modal-charselect" class="modal" style="display: flex;">
+      <h2>ESCOLHA SEU PATO</h2>
+      <div class="grid-cards" id="char-cards"></div>
+    </div>
+
+    <div id="modal-levelup" class="modal">
+      <h2>SUBIU DE NÍVEL! ESCOLHA UM PODER</h2>
+      <div class="grid-cards" id="upgrade-cards"></div>
+    </div>
+
+    <div id="modal-gameover-survivor" class="modal">
+      <h2 style="color: #e53935;">O PATO FOI DERROTADO!</h2>
+      <p id="gameover-survivor-stats" style="font-size: 15px; margin-bottom: 12px;"></p>
+      <button class="btn" onclick="abrirSelecaoPersonagem()">TROCAR DE PATO</button>
+    </div>
+  </div>
+
+  <!-- TELA 2: DUCK CROSSING -->
+  <div id="screen-crossing" class="game-screen">
+    <canvas id="canvas-crossing" width="880" height="580"></canvas>
+    <div id="crossing-hud">
+      <span>VIDAS: <span id="cross-vidas">❤️❤️❤️</span></span>
+      <span>FASE: <span id="cross-fase">1</span></span>
+      <span>NINHOS: <span id="cross-pontos">0</span>/5</span>
+    </div>
+
+    <div id="modal-gameover-crossing" class="modal">
+      <h2 id="cross-over-title" style="color: #e53935;">FIM DE JOGO!</h2>
+      <p id="cross-over-desc" style="font-size: 15px; margin-bottom: 12px;"></p>
+      <button class="btn" onclick="reiniciarCrossing()">TENTAR NOVAMENTE</button>
+    </div>
+  </div>
+
+  <!-- TELA 3: DUCK CLICKER -->
+  <div id="screen-clicker" class="game-screen">
+    <div class="clicker-left" id="clicker-zone">
+      <div class="clicker-stats">
+        <div class="clicker-seeds"><span id="txt-seeds">0</span> 🌾</div>
+        <div class="clicker-sps"><span id="txt-sps">0</span> sementes/segundo</div>
+      </div>
+      <div id="big-duck" onclick="clicarNoPato(event)">🦆</div>
+    </div>
+
+    <div class="clicker-right">
+      <div class="clicker-shop-title">🏪 MERCADO DO LAGO</div>
+      <div id="clicker-shop-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// --- MOTOR DE ÁUDIO & CONTROLE DE MUTE ---
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+let somAtivo = true;
+
+const btnSound = document.getElementById('btn-sound');
+
+function initAudio() {
+  if (!actx) actx = new AudioCtx();
+  if (actx.state === 'suspended') actx.resume();
+}
+
+function toggleSom() {
+  somAtivo = !somAtivo;
+  if (somAtivo) {
+    btnSound.textContent = '🔊 SOM: ON';
+    btnSound.classList.remove('muted');
+    initAudio();
+    somQuack();
+  } else {
+    btnSound.textContent = '🔇 SOM: OFF';
+    btnSound.classList.add('muted');
+  }
+}
+
+function playBeep(type, freq, duration) {
+  if (!somAtivo || !actx) return;
+  try {
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, actx.currentTime);
+    gain.gain.setValueAtTime(0.12, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(actx.destination);
+    osc.start();
+    osc.stop(actx.currentTime + duration);
+  } catch(e) {}
+}
+
+const somQuack = () => playBeep('sawtooth', 340, 0.12);
+const somTiro = () => playBeep('square', 520, 0.08);
+const somExplosao = () => playBeep('triangle', 75, 0.25);
+const somLvlUp = () => { playBeep('sine', 523, 0.1); setTimeout(() => playBeep('sine', 659, 0.2), 100); };
+const somPulo = () => playBeep('sine', 400, 0.06);
+const somAgua = () => playBeep('sine', 150, 0.2);
+const somMoeda = () => playBeep('triangle', 784, 0.08);
+
+// --- NAVEGAÇÃO ENTRE JOGOS ---
+let jogoAtual = null;
+const menuPrincipal = document.getElementById('main-menu');
+const btnHome = document.getElementById('btn-home');
+const telaSurvivor = document.getElementById('screen-survivor');
+const telaCrossing = document.getElementById('screen-crossing');
+const telaClicker = document.getElementById('screen-clicker');
+
+function abrirMenuPrincipal() {
+  pausarSurvivor();
+  pausarCrossing();
+  jogoAtual = null;
+  telaSurvivor.style.display = 'none';
+  telaCrossing.style.display = 'none';
+  telaClicker.style.display = 'none';
+  btnHome.style.display = 'none';
+  menuPrincipal.style.display = 'flex';
+}
+
+function iniciarSurvivor() {
+  initAudio();
+  menuPrincipal.style.display = 'none';
+  telaCrossing.style.display = 'none';
+  telaClicker.style.display = 'none';
+  telaSurvivor.style.display = 'block';
+  btnHome.style.display = 'block';
+  jogoAtual = 'survivor';
+  abrirSelecaoPersonagem();
+}
+
+function iniciarCrossing() {
+  initAudio();
+  menuPrincipal.style.display = 'none';
+  telaSurvivor.style.display = 'none';
+  telaClicker.style.display = 'none';
+  telaCrossing.style.display = 'block';
+  btnHome.style.display = 'block';
+  jogoAtual = 'crossing';
+  iniciarLogicaCrossing();
+}
+
+function iniciarClicker() {
+  initAudio();
+  menuPrincipal.style.display = 'none';
+  telaSurvivor.style.display = 'none';
+  telaCrossing.style.display = 'none';
+  telaClicker.style.display = 'flex';
+  btnHome.style.display = 'block';
+  jogoAtual = 'clicker';
+  atualizarUiClicker();
+}
+
+// ====================================================
+// 1. DUCK SURVIVOR
+// ====================================================
+const cvSurv = document.getElementById('canvas-survivor');
+const ctxSurv = cvSurv.getContext('2d');
+const elHp = document.getElementById('hp-bar');
+const elXp = document.getElementById('xp-bar');
+const elLvl = document.getElementById('txt-lvl');
+const elTimer = document.getElementById('txt-timer');
+const elKills = document.getElementById('txt-kills');
+const modalChar = document.getElementById('modal-charselect');
+const charCards = document.getElementById('char-cards');
+const modalLvl = document.getElementById('modal-levelup');
+const upgradeCards = document.getElementById('upgrade-cards');
+const modalGOSurv = document.getElementById('modal-gameover-survivor');
+const txtGOSurv = document.getElementById('gameover-survivor-stats');
+
+let survRodando = false, survTempo = 0, survKills = 0, survWaddle = 0;
+
+const CATALOGO_PATOS = [
+  { id: 'frances', nome: 'Pato Francês', skin: '🦆', tag: '🥖', arma: 'baguete', hp: 100, vel: 3.4, dano: 1.0, area: 1.0, magnet: 85, desc: 'Baguete blindada orbital.' },
+  { id: 'ganso', nome: 'Ganso Bélico', skin: '🪿', tag: '💢', arma: 'ovos', hp: 80, vel: 3.2, dano: 1.35, area: 1.0, magnet: 85, desc: '+35% dano com metralhadora de ovos.' },
+  { id: 'marinheiro', nome: 'Pato Marinheiro', skin: '🦆', tag: '⚓', arma: 'agua', hp: 150, vel: 2.8, dano: 1.0, area: 1.1, magnet: 90, regen: 0.05, desc: '+50% vida e jatos perfurantes.' },
+  { id: 'ninja', nome: 'Pato Shinobi', skin: '🦆', tag: '🥷', arma: 'penas', hp: 90, vel: 4.2, dano: 1.0, area: 0.9, magnet: 140, desc: 'Velocidade alta e tempestade de penas.' },
+  { id: 'padeiro', nome: 'Pato Padeiro', skin: '🦆', tag: '👨‍🍳', arma: 'pao', hp: 110, vel: 3.0, dano: 1.1, area: 1.5, magnet: 85, desc: 'Pães detonam com +50% de raio.' },
+  { id: 'mamae', nome: 'Mamãe Pata', skin: '🦆', tag: '🪺', arma: 'patinhos', hp: 100, vel: 3.2, dano: 1.0, area: 1.0, magnet: 100, desc: 'Começa com 2 patinhos de guarda.' }
+];
+
+let patoAtual = CATALOGO_PATOS[0];
+const patoSurv = { x: 440, y: 290, raio: 16, hp: 100, hpMax: 100, lvl: 1, xp: 0, xpProx: 4, dir: true };
+const armasSurv = {
+  baguete: { nome: "Baguete Giratória", icon: "🥖", lvl: 0, ang: 0, desc: "Gira afastando quem encostar." },
+  ovos: { nome: "Disparo de Ovos", icon: "🥚", lvl: 0, cd: 35, t: 0, desc: "Ovos teleguiados nos inimigos." },
+  agua: { nome: "Jato d'Água", icon: "💦", lvl: 0, cd: 75, t: 0, desc: "Ondas perfurantes em fileira." },
+  penas: { nome: "Rajada de Penas", icon: "🪶", lvl: 0, cd: 100, t: 0, desc: "Explosão de penas em 360 graus." },
+  pao: { nome: "Pão Explosivo", icon: "🍞", lvl: 0, cd: 130, t: 0, desc: "Pães detonam em área ampla." },
+  patinhos: { nome: "Tropa de Patinhos", icon: "🐥", lvl: 0, lista: [], desc: "Patinhos autônomos que caçam alvos." }
+};
+
+let survInimigos = [], survProjeteis = [], survSementes = [], survTextos = [];
+let timerSurvSpawn = 0;
+const survTipos = [
+  { icon: '🦊', hp: 12, vel: 1.8, exp: 1, dano: 8, raio: 14 },
+  { icon: '🐺', hp: 28, vel: 1.4, exp: 2, dano: 14, raio: 16 },
+  { icon: '🐗', hp: 65, vel: 0.9, exp: 5, dano: 20, raio: 20 },
+  { icon: '🚜', hp: 250, vel: 0.55, exp: 25, dano: 35, raio: 28 }
+];
+
+function abrirSelecaoPersonagem() {
+  pausarSurvivor();
+  modalGOSurv.style.display = 'none';
+  modalLvl.style.display = 'none';
+  charCards.innerHTML = '';
+  CATALOGO_PATOS.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'select-card';
+    card.innerHTML = `
+      <div class="icon">${p.skin} <small style="font-size: 20px;">${p.tag}</small></div>
+      <div class="name">${p.nome}</div>
+      <div class="desc" style="color: #ffd700; margin-bottom: 4px;">${armasSurv[p.arma].nome}</div>
+      <div class="desc">${p.desc}</div>
+    `;
+    card.onclick = () => comecarPartidaSurvivor(p);
+    charCards.appendChild(card);
+  });
+  modalChar.style.display = 'flex';
+}
+
+function comecarPartidaSurvivor(modelo) {
+  patoAtual = modelo;
+  modalChar.style.display = 'none';
+  patoSurv.x = 440;
+  patoSurv.y = 290;
+  patoSurv.hpMax = modelo.hp;
+  patoSurv.hp = modelo.hp;
+  patoSurv.xp = 0;
+  patoSurv.xpProx = 4;
+  patoSurv.lvl = 1;
+  survKills = 0;
+  survTempo = 0;
+
+  Object.keys(armasSurv).forEach(k => {
+    armasSurv[k].lvl = 0;
+    if (armasSurv[k].lista) armasSurv[k].lista = [];
+  });
+  armasSurv[modelo.arma].lvl = (modelo.id === 'mamae') ? 2 : 1;
+
+  survInimigos = [];
+  survProjeteis = [];
+  survSementes = [];
+  survTextos = [];
+
+  elHp.style.width = '100%';
+  elXp.style.width = '0%';
+  elLvl.textContent = 'LV 1';
+  elKills.textContent = 'KILLS: 0';
+
+  survRodando = true;
+  requestAnimationFrame(loopSurvivor);
+}
+
+function pausarSurvivor() {
+  survRodando = false;
+}
+
+function spawnInimigoSurv() {
+  const lado = Math.floor(Math.random() * 4);
+  let x, y;
+  if (lado === 0) { x = Math.random() * cvSurv.width; y = -30; }
+  else if (lado === 1) { x = cvSurv.width + 30; y = Math.random() * cvSurv.height; }
+  else if (lado === 2) { x = Math.random() * cvSurv.width; y = cvSurv.height + 30; }
+  else { x = -30; y = Math.random() * cvSurv.height; }
+
+  let pool = [survTipos[0]];
+  if (survTempo > 25) pool.push(survTipos[1]);
+  if (survTempo > 50) pool.push(survTipos[2]);
+  if (survTempo > 90 && Math.random() < 0.15) pool.push(survTipos[3]);
+
+  const base = pool[Math.floor(Math.random() * pool.length)];
+  survInimigos.push({
+    x, y, icon: base.icon, hp: base.hp + Math.floor(survTempo * 0.22),
+    vel: base.vel, dano: base.dano, raio: base.raio, exp: base.exp
+  });
+}
+
+function danoSurv(inimigo, base) {
+  const final = base * patoAtual.dano;
+  inimigo.hp -= final;
+  survTextos.push({ x: inimigo.x, y: inimigo.y - 6, txt: Math.round(final), a: 1 });
+  if (inimigo.hp <= 0 && !inimigo.dead) {
+    inimigo.dead = true;
+    survKills++;
+    elKills.textContent = `KILLS: ${survKills}`;
+    survSementes.push({ x: inimigo.x, y: inimigo.y, exp: inimigo.exp });
+  }
+}
+
+function atualizarArmasSurv() {
+  if (armasSurv.baguete.lvl > 0) {
+    armasSurv.baguete.ang += 0.05 + (armasSurv.baguete.lvl * 0.008);
+    const qtd = Math.min(armasSurv.baguete.lvl, 4);
+    const dist = 60 + armasSurv.baguete.lvl * 4;
+    for (let i = 0; i < qtd; i++) {
+      const a = armasSurv.baguete.ang + (i * (Math.PI * 2 / qtd));
+      const bx = patoSurv.x + Math.cos(a) * dist;
+      const by = patoSurv.y + Math.sin(a) * dist;
+      survInimigos.forEach(e => {
+        if (Math.hypot(e.x - bx, e.y - by) < e.raio + 16) danoSurv(e, 0.7 + armasSurv.baguete.lvl * 0.35);
+      });
+    }
+  }
+
+  if (armasSurv.ovos.lvl > 0) {
+    armasSurv.ovos.t++;
+    if (armasSurv.ovos.t >= Math.max(12, armasSurv.ovos.cd - armasSurv.ovos.lvl * 4) && survInimigos.length > 0) {
+      armasSurv.ovos.t = 0;
+      let alvo = getNearestSurv();
+      if (alvo) {
+        somTiro();
+        let ang = Math.atan2(alvo.y - patoSurv.y, alvo.x - patoSurv.x);
+        survProjeteis.push({ type: 'ovo', x: patoSurv.x, y: patoSurv.y, vx: Math.cos(ang) * 7.5, vy: Math.sin(ang) * 7.5, life: 70, dmg: 15 + armasSurv.ovos.lvl * 6 });
+      }
+    }
+  }
+
+  if (armasSurv.agua.lvl > 0) {
+    armasSurv.agua.t++;
+    if (armasSurv.agua.t >= Math.max(25, armasSurv.agua.cd - armasSurv.agua.lvl * 5) && survInimigos.length > 0) {
+      armasSurv.agua.t = 0;
+      let alvo = getNearestSurv();
+      if (alvo) {
+        let ang = Math.atan2(alvo.y - patoSurv.y, alvo.x - patoSurv.x);
+        survProjeteis.push({ type: 'agua', x: patoSurv.x, y: patoSurv.y, vx: Math.cos(ang) * 5.5, vy: Math.sin(ang) * 5.5, life: 110, dmg: 20 + armasSurv.agua.lvl * 8, pierce: 2 + armasSurv.agua.lvl });
+      }
+    }
+  }
+
+  if (armasSurv.penas.lvl > 0) {
+    armasSurv.penas.t++;
+    if (armasSurv.penas.t >= Math.max(45, armasSurv.penas.cd - armasSurv.penas.lvl * 6)) {
+      armasSurv.penas.t = 0;
+      somQuack();
+      const qtd = 6 + armasSurv.penas.lvl * 2;
+      for (let i = 0; i < qtd; i++) {
+        let ang = (Math.PI * 2 / qtd) * i;
+        survProjeteis.push({ type: 'pena', x: patoSurv.x, y: patoSurv.y, vx: Math.cos(ang) * 6, vy: Math.sin(ang) * 6, life: 40, dmg: 12 + armasSurv.penas.lvl * 4 });
+      }
+    }
+  }
+
+  if (armasSurv.pao.lvl > 0) {
+    armasSurv.pao.t++;
+    if (armasSurv.pao.t >= Math.max(50, armasSurv.pao.cd - armasSurv.pao.lvl * 8) && survInimigos.length > 0) {
+      armasSurv.pao.t = 0;
+      let alvo = getNearestSurv();
+      if (alvo) {
+        survProjeteis.push({ type: 'pao', x: patoSurv.x, y: patoSurv.y, tx: alvo.x, ty: alvo.y, life: 45, dmg: 40 + armasSurv.pao.lvl * 15, area: (75 + armasSurv.pao.lvl * 10) * patoAtual.area });
+      }
+    }
+  }
+
+  if (armasSurv.patinhos.lvl > 0) {
+    while (armasSurv.patinhos.lista.length < armasSurv.patinhos.lvl) {
+      armasSurv.patinhos.lista.push({ x: patoSurv.x, y: patoSurv.y, vel: 2.8, alvo: null, cd: 0 });
+    }
+    armasSurv.patinhos.lista.forEach(f => {
+      if (!f.alvo || f.alvo.hp <= 0 || !survInimigos.includes(f.alvo)) f.alvo = getNearestSurv(f.x, f.y);
+      if (f.alvo) {
+        let a = Math.atan2(f.alvo.y - f.y, f.alvo.x - f.x);
+        f.x += Math.cos(a) * f.vel; f.y += Math.sin(a) * f.vel;
+        if (f.cd > 0) f.cd--;
+        if (Math.hypot(f.alvo.x - f.x, f.alvo.y - f.y) < 18 && f.cd <= 0) {
+          danoSurv(f.alvo, 14 + armasSurv.patinhos.lvl * 4);
+          f.cd = 24;
+        }
+      } else {
+        if (Math.hypot(patoSurv.x - f.x, patoSurv.y - f.y) > 35) {
+          let a = Math.atan2(patoSurv.y - f.y, patoSurv.x - f.x);
+          f.x += Math.cos(a) * f.vel; f.y += Math.sin(a) * f.vel;
+        }
+      }
+    });
+  }
+}
+
+function getNearestSurv(ox = patoSurv.x, oy = patoSurv.y) {
+  let near = null, min = Infinity;
+  for (let e of survInimigos) {
+    let d = Math.hypot(e.x - ox, e.y - oy);
+    if (d < min) { min = d; near = e; }
+  }
+  return near;
+}
+
+function loopSurvivor() {
+  if (!survRodando || jogoAtual !== 'survivor') return;
+
+  if (patoAtual.regen && patoSurv.hp < patoSurv.hpMax) {
+    patoSurv.hp = Math.min(patoSurv.hpMax, patoSurv.hp + patoAtual.regen);
+    elHp.style.width = `${(patoSurv.hp / patoSurv.hpMax) * 100}%`;
+  }
+
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['arrowup']) dy -= 1;
+  if (keys['s'] || keys['arrowdown']) dy += 1;
+  if (keys['a'] || keys['arrowleft']) { dx -= 1; patoSurv.dir = false; }
+  if (keys['d'] || keys['arrowright']) { dx += 1; patoSurv.dir = true; }
+
+  if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+  if (dx !== 0 || dy !== 0) {
+    survWaddle += 0.22;
+    patoSurv.x = Math.max(patoSurv.raio, Math.min(cvSurv.width - patoSurv.raio, patoSurv.x + dx * patoAtual.vel));
+    patoSurv.y = Math.max(patoSurv.raio, Math.min(cvSurv.height - patoSurv.raio, patoSurv.y + dy * patoAtual.vel));
+  }
+
+  timerSurvSpawn++;
+  if (timerSurvSpawn >= Math.max(16, 50 - Math.floor(survTempo * 0.25))) {
+    timerSurvSpawn = 0;
+    spawnInimigoSurv();
+  }
+
+  survInimigos.forEach(e => {
+    let a = Math.atan2(patoSurv.y - e.y, patoSurv.x - e.x);
+    e.x += Math.cos(a) * e.vel; e.y += Math.sin(a) * e.vel;
+    if (Math.hypot(patoSurv.x - e.x, patoSurv.y - e.y) < patoSurv.raio + e.raio) {
+      patoSurv.hp -= e.dano * 0.025;
+      elHp.style.width = `${Math.max(0, (patoSurv.hp / patoSurv.hpMax) * 100)}%`;
+      if (patoSurv.hp <= 0) {
+        survRodando = false;
+        somExplosao();
+        txtGOSurv.innerHTML = `Pato: <b>${patoAtual.nome}</b><br>Tempo: <b>${formatTimer(survTempo)}</b> | Kills: <b>${survKills}</b> | Nível: <b>${patoSurv.lvl}</b>`;
+        modalGOSurv.style.display = 'flex';
+      }
+    }
+  });
+  survInimigos = survInimigos.filter(e => !e.dead);
+
+  atualizarArmasSurv();
+
+  survProjeteis.forEach(p => {
+    if (p.type === 'pao') {
+      p.life--;
+      p.x += (p.tx - p.x) * 0.08; p.y += (p.ty - p.y) * 0.08;
+      if (p.life <= 0) {
+        somExplosao();
+        survInimigos.forEach(e => { if (Math.hypot(e.x - p.x, e.y - p.y) < p.area) danoSurv(e, p.dmg); });
+        p.exp = true;
+      }
+    } else {
+      p.x += p.vx; p.y += p.vy; p.life--;
+      survInimigos.forEach(e => {
+        if (!p.dead && Math.hypot(e.x - p.x, e.y - p.y) < e.raio + 10) {
+          danoSurv(e, p.dmg);
+          if (p.pierce) { p.pierce--; if (p.pierce <= 0) p.dead = true; } else p.dead = true;
+        }
+      });
+    }
+  });
+  survProjeteis = survProjeteis.filter(p => p.life > 0 && !p.dead && !p.exp);
+
+  survSementes.forEach((s, idx) => {
+    if (Math.hypot(patoSurv.x - s.x, patoSurv.y - s.y) < patoAtual.magnet) {
+      s.x += (patoSurv.x - s.x) * 0.16; s.y += (patoSurv.y - s.y) * 0.16;
+    }
+    if (Math.hypot(patoSurv.x - s.x, patoSurv.y - s.y) < patoSurv.raio + 10) {
+      patoSurv.xp += s.exp;
+      if (patoSurv.xp >= patoSurv.xpProx) {
+        patoSurv.xp -= patoSurv.xpProx;
+        patoSurv.lvl++;
+        patoSurv.xpProx = Math.floor(patoSurv.xpProx * 1.35);
+        elLvl.textContent = `LV ${patoSurv.lvl}`;
+        survRodando = false;
+        somLvlUp();
+        upgradeCards.innerHTML = '';
+        let keysArr = Object.keys(armasSurv).sort(() => 0.5 - Math.random()).slice(0, 3);
+        keysArr.forEach(k => {
+          let w = armasSurv[k];
+          let card = document.createElement('div');
+          card.className = 'select-card';
+          card.innerHTML = `<div class="icon">${w.icon}</div><div class="name">${w.nome}</div><div class="desc">${w.desc}</div><div style="margin-top:6px; font-weight:bold; color:#fbc02d;">Nv ${w.lvl} ➔ Nv ${w.lvl+1}</div>`;
+          card.onclick = () => {
+            w.lvl++; modalLvl.style.display = 'none'; survRodando = true; requestAnimationFrame(loopSurvivor);
+          };
+          upgradeCards.appendChild(card);
+        });
+        modalLvl.style.display = 'flex';
+      }
+      elXp.style.width = `${(patoSurv.xp / patoSurv.xpProx) * 100}%`;
+      survSementes.splice(idx, 1);
+    }
+  });
+
+  survTextos.forEach(t => { t.y -= 0.6; t.a -= 0.025; });
+  survTextos = survTextos.filter(t => t.a > 0);
+
+  ctxSurv.clearRect(0, 0, cvSurv.width, cvSurv.height);
+  ctxSurv.fillStyle = '#659438';
+  for (let x = 0; x < cvSurv.width; x += 50) {
+    for (let y = 0; y < cvSurv.height; y += 50) {
+      if ((x / 50 + y / 50) % 2 === 0) ctxSurv.fillRect(x, y, 50, 50);
+    }
+  }
+
+  ctxSurv.font = '16px serif';
+  ctxSurv.textAlign = 'center';
+  ctxSurv.textBaseline = 'middle';
+  survSementes.forEach(s => ctxSurv.fillText('🌾', s.x, s.y));
+
+  if (armasSurv.baguete.lvl > 0) {
+    const qtd = Math.min(armasSurv.baguete.lvl, 4);
+    const dist = 60 + armasSurv.baguete.lvl * 4;
+    for (let i = 0; i < qtd; i++) {
+      let a = armasSurv.baguete.ang + (i * (Math.PI * 2 / qtd));
+      ctxSurv.font = '24px serif';
+      ctxSurv.fillText('🥖', patoSurv.x + Math.cos(a) * dist, patoSurv.y + Math.sin(a) * dist);
+    }
+  }
+
+  if (armasSurv.patinhos.lvl > 0) {
+    armasSurv.patinhos.lista.forEach(p => { ctxSurv.font = '20px serif'; ctxSurv.fillText('🐥', p.x, p.y); });
+  }
+
+  survProjeteis.forEach(p => {
+    ctxSurv.font = '22px serif';
+    if (p.type === 'ovo') ctxSurv.fillText('🥚', p.x, p.y);
+    if (p.type === 'agua') ctxSurv.fillText('💦', p.x, p.y);
+    if (p.type === 'pena') ctxSurv.fillText('🪶', p.x, p.y);
+    if (p.type === 'pao') {
+      ctxSurv.fillText('🍞', p.x, p.y);
+      ctxSurv.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctxSurv.beginPath(); ctxSurv.arc(p.x, p.y, p.area, 0, Math.PI * 2); ctxSurv.stroke();
+    }
+  });
+
+  survInimigos.forEach(e => { ctxSurv.font = `${e.raio * 1.8}px serif`; ctxSurv.fillText(e.icon, e.x, e.y); });
+
+  ctxSurv.save();
+  ctxSurv.translate(patoSurv.x, patoSurv.y);
+  if (!patoSurv.dir) ctxSurv.scale(-1, 1);
+  ctxSurv.rotate(Math.sin(survWaddle) * 0.12);
+  ctxSurv.font = '36px serif';
+  ctxSurv.fillText(patoAtual.skin, 0, 0);
+  ctxSurv.font = '18px serif';
+  ctxSurv.fillText(patoAtual.tag, 4, -18);
+  ctxSurv.restore();
+
+  survTextos.forEach(t => {
+    ctxSurv.fillStyle = `rgba(255, 255, 255, ${t.a})`;
+    ctxSurv.font = 'bold 13px Courier New';
+    ctxSurv.fillText(t.txt, t.x, t.y);
+  });
+
+  requestAnimationFrame(loopSurvivor);
+}
+
+function formatTimer(s) {
+  let m = Math.floor(s / 60).toString().padStart(2, '0');
+  let sec = (s % 60).toString().padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+setInterval(() => {
+  if (survRodando && jogoAtual === 'survivor') {
+    survTempo++;
+    elTimer.textContent = formatTimer(survTempo);
+  }
+}, 1000);
+
+// ====================================================
+// 2. DUCK CROSSING (SISTEMA DE GRADE & HITBOX REVISADO)
+// ====================================================
+const cvCross = document.getElementById('canvas-crossing');
+const ctxCross = cvCross.getContext('2d');
+const elCrossVidas = document.getElementById('cross-vidas');
+const elCrossFase = document.getElementById('cross-fase');
+const elCrossPontos = document.getElementById('cross-pontos');
+const modalGOCross = document.getElementById('modal-gameover-crossing');
+const titleGOCross = document.getElementById('cross-over-title');
+const descGOCross = document.getElementById('cross-over-desc');
+
+let crossRodando = false, crossVidas = 3, crossFase = 1;
+let crossNinhosPreenchidos = [false, false, false, false, false];
+const ninhoXPos = [90, 265, 440, 615, 790];
+
+// Grade Y: 530 (início), 485, 440, 395, 350, 305 (ruas), 260 (grama), 215, 170, 125, 80 (rios), 35 (ninhos)
+const crossPato = { gridX: 440, gridY: 530, stepX: 35, stepY: 45 };
+let faixas = [];
+
+function iniciarLogicaCrossing() {
+  crossVidas = 3;
+  crossFase = 1;
+  crossNinhosPreenchidos = [false, false, false, false, false];
+  modalGOCross.style.display = 'none';
+  atualizarHudCrossing();
+  montarFaixasCrossing();
+  resetPosicaoPatoCrossing();
+  crossRodando = true;
+  requestAnimationFrame(loopCrossing);
+}
+
+function pausarCrossing() {
+  crossRodando = false;
+}
+
+function resetPosicaoPatoCrossing() {
+  crossPato.gridX = 440;
+  crossPato.gridY = 530;
+}
+
+function atualizarHudCrossing() {
+  elCrossVidas.textContent = '❤️'.repeat(Math.max(0, crossVidas));
+  elCrossFase.textContent = crossFase;
+  let preenchidos = crossNinhosPreenchidos.filter(n => n).length;
+  elCrossPontos.textContent = preenchidos;
+}
+
+function montarFaixasCrossing() {
+  const mult = 1 + (crossFase - 1) * 0.25;
+  faixas = [
+    // Rios (Y perfeitamente alinhados com o pulo do pato)
+    { y: 80, tipo: 'rio', vel: 2.0 * mult, dir: -1, largura: 110, espacamento: 230, itens: [] },
+    { y: 125, tipo: 'rio', vel: 2.6 * mult, dir: 1, largura: 95, espacamento: 200, itens: [] },
+    { y: 170, tipo: 'rio', vel: 1.8 * mult, dir: -1, largura: 130, espacamento: 250, itens: [] },
+    { y: 215, tipo: 'rio', vel: 2.4 * mult, dir: 1, largura: 100, espacamento: 220, itens: [] },
+    // Rodovias (Y perfeitamente alinhados com o pulo do pato)
+    { y: 305, tipo: 'rua', vel: 2.5 * mult, dir: -1, icon: '🚜', largura: 40, espacamento: 240, itens: [] },
+    { y: 350, tipo: 'rua', vel: 3.4 * mult, dir: 1, icon: '🚗', largura: 38, espacamento: 210, itens: [] },
+    { y: 395, tipo: 'rua', vel: 2.8 * mult, dir: -1, icon: '🚚', largura: 55, espacamento: 270, itens: [] },
+    { y: 440, tipo: 'rua', vel: 4.0 * mult, dir: 1, icon: '🏎️', largura: 42, espacamento: 250, itens: [] },
+    { y: 485, tipo: 'rua', vel: 2.2 * mult, dir: -1, icon: '🚜', largura: 40, espacamento: 230, itens: [] }
+  ];
+
+  faixas.forEach(f => {
+    let x = 0;
+    while (x < cvCross.width + f.espacamento) {
+      f.itens.push({ x: x });
+      x += f.espacamento;
+    }
+  });
+}
+
+function moverPatoCrossing(e) {
+  if (!crossRodando || jogoAtual !== 'crossing') return;
+  const k = e.key.toLowerCase();
+  let moveu = false;
+
+  if (k === 'w' || k === 'arrowup') {
+    if (crossPato.gridY > 35) crossPato.gridY -= crossPato.stepY;
+    moveu = true;
+  } else if (k === 's' || k === 'arrowdown') {
+    if (crossPato.gridY < 530) crossPato.gridY += crossPato.stepY;
+    moveu = true;
+  } else if (k === 'a' || k === 'arrowleft') {
+    if (crossPato.gridX > 35) crossPato.gridX -= crossPato.stepX;
+    moveu = true;
+  } else if (k === 'd' || k === 'arrowright') {
+    if (crossPato.gridX < cvCross.width - 35) crossPato.gridX += crossPato.stepX;
+    moveu = true;
+  }
+
+  if (moveu) somPulo();
+}
+
+function perderVidaCrossing(motivo) {
+  crossVidas--;
+  atualizarHudCrossing();
+  if (motivo === 'afogou') somAgua(); else somExplosao();
+
+  if (crossVidas <= 0) {
+    crossRodando = false;
+    titleGOCross.textContent = 'FIM DE JOGO!';
+    descGOCross.innerHTML = `O patinho não resistiu aos perigos.<br>Você chegou até a <b>Fase ${crossFase}</b>.`;
+    modalGOCross.style.display = 'flex';
+  } else {
+    resetPosicaoPatoCrossing();
+  }
+}
+
+function reiniciarCrossing() {
+  iniciarLogicaCrossing();
+}
+
+function loopCrossing() {
+  if (!crossRodando || jogoAtual !== 'crossing') return;
+
+  faixas.forEach(f => {
+    f.itens.forEach(item => {
+      item.x += f.vel * f.dir;
+      if (f.dir === 1 && item.x > cvCross.width + 100) item.x = -120;
+      if (f.dir === -1 && item.x < -120) item.x = cvCross.width + 100;
+    });
+  });
+
+  // Checagem de faixa atual do pato com tolerância adequada
+  let faixaAtual = faixas.find(f => Math.abs(f.y - crossPato.gridY) < 20);
+
+  if (faixaAtual) {
+    if (faixaAtual.tipo === 'rua') {
+      // Hitbox retangular para colisão exata com veículos
+      for (let car of faixaAtual.itens) {
+        const dx = Math.abs(car.x - crossPato.gridX);
+        const colidiu = dx < (faixaAtual.largura / 2 + 14);
+        if (colidiu) {
+          perderVidaCrossing('atropelado');
+          break;
+        }
+      }
+    } else if (faixaAtual.tipo === 'rio') {
+      // Verificação estrita se está sobre tronco flutuante
+      let emCimaDeTronco = false;
+      for (let tronco of faixaAtual.itens) {
+        if (crossPato.gridX >= tronco.x - 10 && crossPato.gridX <= tronco.x + faixaAtual.largura + 10) {
+          emCimaDeTronco = true;
+          crossPato.gridX += faixaAtual.vel * faixaAtual.dir;
+          break;
+        }
+      }
+
+      if (!emCimaDeTronco || crossPato.gridX < 10 || crossPato.gridX > cvCross.width - 10) {
+        perderVidaCrossing('afogou');
+      }
+    }
+  }
+
+  // Ninhos no Topo (Linha Y <= 40)
+  if (crossPato.gridY <= 45) {
+    let ninhoIndex = -1;
+    for (let i = 0; i < ninhoXPos.length; i++) {
+      if (Math.abs(crossPato.gridX - ninhoXPos[i]) < 35) {
+        ninhoIndex = i;
+        break;
+      }
+    }
+
+    if (ninhoIndex !== -1 && !crossNinhosPreenchidos[ninhoIndex]) {
+      crossNinhosPreenchidos[ninhoIndex] = true;
+      somLvlUp();
+      atualizarHudCrossing();
+      resetPosicaoPatoCrossing();
+
+      if (crossNinhosPreenchidos.every(n => n)) {
+        crossFase++;
+        crossNinhosPreenchidos = [false, false, false, false, false];
+        montarFaixasCrossing();
+        atualizarHudCrossing();
+      }
+    } else {
+      perderVidaCrossing('afogou');
+    }
+  }
+
+  // Render Crossing
+  ctxCross.clearRect(0, 0, cvCross.width, cvCross.height);
+
+  // 1. Faixa de Ninhos
+  ctxCross.fillStyle = '#2e7d32';
+  ctxCross.fillRect(0, 0, cvCross.width, 60);
+
+  ninhoXPos.forEach((nx, idx) => {
+    ctxCross.fillStyle = '#1565c0';
+    ctxCross.fillRect(nx - 30, 10, 60, 45);
+    ctxCross.font = '28px serif';
+    ctxCross.textAlign = 'center';
+    ctxCross.textBaseline = 'middle';
+    ctxCross.fillText(crossNinhosPreenchidos[idx] ? '🦆' : '🪺', nx, 32);
+  });
+
+  // 2. Rio (Y de 60 a 240)
+  ctxCross.fillStyle = '#1976d2';
+  ctxCross.fillRect(0, 60, cvCross.width, 180);
+
+  faixas.filter(f => f.tipo === 'rio').forEach(f => {
+    f.itens.forEach(t => {
+      ctxCross.fillStyle = '#8d6e63';
+      ctxCross.beginPath();
+      ctxCross.roundRect(t.x, f.y - 14, f.largura, 28, 8);
+      ctxCross.fill();
+      ctxCross.fillStyle = '#5d4037';
+      ctxCross.fillRect(t.x + 8, f.y - 10, f.largura - 16, 4);
+    });
+  });
+
+  // 3. Faixa de descanso central
+  ctxCross.fillStyle = '#388e3c';
+  ctxCross.fillRect(0, 240, cvCross.width, 42);
+
+  // 4. Rodovia de Asfalto (Y de 282 a 510)
+  ctxCross.fillStyle = '#263238';
+  ctxCross.fillRect(0, 282, cvCross.width, 228);
+
+  ctxCross.strokeStyle = '#fff';
+  ctxCross.setLineDash([18, 18]);
+  for (let y = 327; y <= 470; y += 45) {
+    ctxCross.beginPath();
+    ctxCross.moveTo(0, y);
+    ctxCross.lineTo(cvCross.width, y);
+    ctxCross.stroke();
+  }
+  ctxCross.setLineDash([]);
+
+  faixas.filter(f => f.tipo === 'rua').forEach(f => {
+    f.itens.forEach(car => {
+      ctxCross.font = '28px serif';
+      ctxCross.textAlign = 'center';
+      ctxCross.textBaseline = 'middle';
+      ctxCross.save();
+      ctxCross.translate(car.x, f.y);
+      if (f.dir === 1) ctxCross.scale(-1, 1);
+      ctxCross.fillText(f.icon, 0, 0);
+      ctxCross.restore();
+    });
+  });
+
+  // 5. Faixa Inicial (Base)
+  ctxCross.fillStyle = '#388e3c';
+  ctxCross.fillRect(0, 510, cvCross.width, 70);
+
+  // 6. Pato
+  ctxCross.font = '32px serif';
+  ctxCross.textAlign = 'center';
+  ctxCross.textBaseline = 'middle';
+  ctxCross.fillText('🦆', crossPato.gridX, crossPato.gridY);
+
+  requestAnimationFrame(loopCrossing);
+}
+
+// ====================================================
+// 3. DUCK CLICKER
+// ====================================================
+let clickerSementes = 0;
+let clickerClickPoder = 1;
+
+const melhoriasClicker = [
+  { id: 'bico', nome: 'Bico Afiado', icon: '🪶', desc: '+1 semente por clique', custo: 15, sps: 0, cpc: 1, qtd: 0 },
+  { id: 'filhote', nome: 'Patinho Ajudante', icon: '🐥', desc: 'Bica o chão automaticamente (+1/s)', custo: 50, sps: 1, cpc: 0, qtd: 0 },
+  { id: 'lago', nome: 'Lago de Milho', icon: '🌽', desc: 'Plantação aquática de grãos (+5/s)', custo: 250, sps: 5, cpc: 0, qtd: 0 },
+  { id: 'trator', nome: 'Trator do Pato', icon: '🚜', desc: 'Colheita mecanizada de trigo (+25/s)', custo: 1200, sps: 25, cpc: 0, qtd: 0 },
+  { id: 'padaria', nome: 'Padaria Francesa', icon: '🥖', desc: 'Gera baguetes e sementes douradas (+100/s)', custo: 6000, sps: 100, cpc: 0, qtd: 0 },
+  { id: 'deus', nome: 'Templo do Grande Quack', icon: '🛕', desc: 'Canaliza bênçãos ancestrais (+500/s)', custo: 30000, sps: 500, cpc: 0, qtd: 0 }
+];
+
+const elSeeds = document.getElementById('txt-seeds');
+const elSps = document.getElementById('txt-sps');
+const clickerZone = document.getElementById('clicker-zone');
+const clickerShopList = document.getElementById('clicker-shop-list');
+
+function calcularSpsTotal() {
+  return melhoriasClicker.reduce((acc, m) => acc + (m.sps * m.qtd), 0);
+}
+
+function clicarNoPato(e) {
+  initAudio();
+  somQuack();
+
+  clickerSementes += clickerClickPoder;
+  atualizarUiClicker();
+
+  const rect = clickerZone.getBoundingClientRect();
+  const floatEl = document.createElement('div');
+  floatEl.className = 'floating-seed';
+  floatEl.textContent = `+${clickerClickPoder} 🌾`;
+  floatEl.style.left = `${e.clientX - rect.left - 20}px`;
+  floatEl.style.top = `${e.clientY - rect.top - 20}px`;
+  clickerZone.appendChild(floatEl);
+
+  setTimeout(() => floatEl.remove(), 800);
+}
+
+function comprarMelhoria(index) {
+  const m = melhoriasClicker[index];
+  if (clickerSementes >= m.custo) {
+    clickerSementes -= m.custo;
+    m.qtd++;
+    if (m.cpc) clickerClickPoder += m.cpc;
+    m.custo = Math.floor(m.custo * 1.15);
+    somMoeda();
+    atualizarUiClicker();
+  }
+}
+
+function renderMercadoClicker() {
+  clickerShopList.innerHTML = '';
+  melhoriasClicker.forEach((m, idx) => {
+    const item = document.createElement('div');
+    const podeComprar = clickerSementes >= m.custo;
+    item.className = `shop-item ${podeComprar ? '' : 'disabled'}`;
+    item.onclick = () => comprarMelhoria(idx);
+    item.innerHTML = `
+      <div>
+        <div class="shop-info-title">${m.icon} ${m.nome}</div>
+        <div class="shop-info-desc">${m.desc}</div>
+      </div>
+      <div class="shop-cost">
+        <div class="shop-cost-val">${m.custo} 🌾</div>
+        <div class="shop-count">Qtd: ${m.qtd}</div>
+      </div>
+    `;
+    clickerShopList.appendChild(item);
+  });
+}
+
+function atualizarUiClicker() {
+  elSeeds.textContent = Math.floor(clickerSementes).toLocaleString();
+  elSps.textContent = calcularSpsTotal().toLocaleString();
+  renderMercadoClicker();
+}
+
+setInterval(() => {
+  const sps = calcularSpsTotal();
+  if (sps > 0) {
+    clickerSementes += sps / 10;
+    if (jogoAtual === 'clicker') {
+      elSeeds.textContent = Math.floor(clickerSementes).toLocaleString();
+    }
+  }
+}, 100);
+
+// Controles Universais de Teclado
+const keys = {};
+window.addEventListener('keydown', e => {
+  initAudio();
+  keys[e.key.toLowerCase()] = true;
+  moverPatoCrossing(e);
+});
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+</script>
+</body>
+</html>
